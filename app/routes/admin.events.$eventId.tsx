@@ -2,7 +2,7 @@ import { useState } from "react";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { getEvent, updateEvent } from "~/models/event.server";
+import { getEventById, updateEvent } from "~/models/event.server";
 import { getAllCategories } from "~/models/category.server";
 import { getAllTags } from "~/models/tag.server";
 import { requireEditor } from "~/utils/session.server";
@@ -21,7 +21,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   }
 
   const [event, categories, tags] = await Promise.all([
-    getEvent(eventId),
+    getEventById(eventId),
     getAllCategories(),
     getAllTags(),
   ]);
