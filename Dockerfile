@@ -5,7 +5,7 @@ FROM base AS deps
 WORKDIR /app
 # ヘルスチェック用にcurlとOpenSSLをインストール
 RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 # ビルドステージ
