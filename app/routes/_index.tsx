@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { getPosts } from "~/models/post.server";
 import { getEvents } from "~/models/event.server";
-import { getSiteSettings } from "~/models/siteSettings.server";
+import { getSiteSettings } from "~/models/SiteSettings.server";
 import { formatDate } from "~/utils/helpers";
 
 export const meta: MetaFunction = () => {

@@ -2,7 +2,7 @@ import { json, type ActionFunctionArgs, type LoaderFunctionArgs } from "@remix-r
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
 import { z } from "zod";
-import { getSiteSettings, updateSiteSettings } from "~/models/siteSettings.server";
+import { getSiteSettings, updateSiteSettings } from "~/models/SiteSettings.server";
 import { requireAdmin } from "~/utils/session.server";
 import { AdminPageHeader } from "~/components/admin/AdminPageHeader";
 import { FormField } from "~/components/ui/FormField";
