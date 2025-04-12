@@ -17,7 +17,8 @@
     "fly:pg:attach": "fly postgres attach webmedia-db --app webmedia",
     "fly:set-secrets": "bash ./scripts/set_fly_secrets.sh",
     "prisma:use-dev": "bash ./scripts/switch-prisma-schema.sh dev",
-    "prisma:use-prod": "bash ./scripts/switch-prisma-schema.sh prod"
+    "prisma:use-prod": "bash ./scripts/switch-prisma-schema.sh prod",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",
