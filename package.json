@@ -14,7 +14,10 @@
     "fly:migrate": "fly ssh console -C 'bash /app/scripts/migrate.sh'",
     "fly:launch": "fly launch --copy-config",
     "fly:pg:create": "fly postgres create --name webmedia-db --region nrt",
-    "fly:pg:attach": "fly postgres attach webmedia-db --app webmedia"
+    "fly:pg:attach": "fly postgres attach webmedia-db --app webmedia",
+    "fly:set-secrets": "bash ./scripts/set_fly_secrets.sh",
+    "prisma:use-dev": "bash ./scripts/switch-prisma-schema.sh dev",
+    "prisma:use-prod": "bash ./scripts/switch-prisma-schema.sh prod"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",

@@ -1,3 +1,16 @@
+#!/bin/bash
+
+# 開発環境と本番環境のPrismaスキーマを切り替えるスクリプト
+
+MODE=$1
+
+if [ "$MODE" = "dev" ]; then
+  echo "開発環境用のPrismaスキーマに切り替えます..."
+  cp prisma/schema.dev.prisma prisma/schema.prisma
+  echo "Prismaスキーマを開発環境用に変更しました。"
+elif [ "$MODE" = "prod" ]; then
+  echo "本番環境用のPrismaスキーマに切り替えます..."
+  cat > prisma/schema.prisma << 'EOL'
 generator client {
   provider = "prisma-client-js"
 }
@@ -257,3 +270,16 @@ model Media {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+EOL
+  echo "Prismaスキーマを本番環境用に変更しました。"
+else
+  echo "使用方法: $0 [dev|prod]"
+  echo "  dev:  開発環境用のPrismaスキーマに切り替えます"
+  echo "  prod: 本番環境用のPrismaスキーマに切り替えます"
+  exit 1
+fi
+
+# Prismaクライアントの再生成
+echo "Prismaクライアントを再生成しています..."
+npx prisma generate
+echo "完了しました。"

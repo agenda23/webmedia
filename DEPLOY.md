@@ -57,11 +57,23 @@ npm run fly:migrate
 - `DATABASE_PROVIDER`: "postgresql"（fly.tomlで設定済み）
 - `SESSION_SECRET`: セッション用のシークレットキー（手動で設定）
 
-シークレットを追加する場合は以下のコマンドを使用します：
+環境変数を設定するには、以下のいずれかの方法を使用します：
+
+### 方法1: シークレットを個別に設定
 
 ```bash
 flyctl secrets set SESSION_SECRET=your-secret-key
 ```
+
+### 方法2: .env.productionファイルから一括設定
+
+.env.productionファイルのすべての環境変数をflyのシークレットとして設定するには：
+
+```bash
+npm run fly:set-secrets
+```
+
+これにより、.env.productionファイルの内容がflyのシークレットとして設定されます。
 
 ## モニタリングとログ
 
@@ -115,10 +127,39 @@ cd /app
 DATABASE_PROVIDER=postgresql npx prisma migrate deploy
 ```
 
-## ローカル開発環境への切り戻し
+## ローカル開発と本番環境の切り替え
 
-ローカル開発に戻る場合は、通常通り`.env`ファイルに設定されたSQLiteデータベースが使用されます：
+このプロジェクトでは、ローカル開発環境ではSQLite、本番環境（fly.io）ではPostgreSQLを使用します。
+
+### ローカル開発環境の設定
+
+ローカル開発環境ではSQLiteを使用します。最初に開発環境用のPrismaスキーマに切り替えます：
+
+```bash
+npm run prisma:use-dev
+```
+
+その後、通常通り開発サーバーを起動します：
 
 ```bash
 npm run dev
 ```
+
+### 本番環境へのデプロイ前の準備
+
+デプロイ前に、本番環境用のPrismaスキーマに切り替えます：
+
+```bash
+npm run prisma:use-prod
+```
+
+その後、通常のデプロイ手順を実行します：
+
+```bash
+npm run fly:deploy
+```
+
+### 注意事項
+
+- デプロイ後に再びローカル開発をする場合は、`npm run prisma:use-dev`を実行して開発環境用のスキーマに戻してください
+- Dockerfileではビルド時に自動的に本番環境用のスキーマに切り替わるよう設定されています

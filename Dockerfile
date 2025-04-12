@@ -3,8 +3,8 @@ FROM node:20-slim AS base
 # 依存関係のインストールステージ
 FROM base AS deps
 WORKDIR /app
-# ヘルスチェック用にcurlをインストール
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# ヘルスチェック用にcurlとOpenSSLをインストール
+RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 RUN npm ci
 
@@ -13,14 +13,16 @@ FROM base AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# 本番環境用のPrismaスキーマを設定
+RUN bash ./scripts/switch-prisma-schema.sh prod
 RUN npx prisma generate
 RUN npm run build
 
 # 本番実行ステージ
 FROM base AS runner
 WORKDIR /app
-# ヘルスチェック用にcurlをインストール
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# ヘルスチェック用にcurlとOpenSSLをインストール
+RUN apt-get update && apt-get install -y curl openssl && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 ENV PORT=8080
 
@@ -30,6 +32,7 @@ COPY --from=build /app/build ./build
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/scripts ./scripts
 
 EXPOSE 8080
 
