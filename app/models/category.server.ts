@@ -59,6 +59,9 @@ export async function getCategories() {
   });
 }
 
+// 全カテゴリ取得関数（getCategories のエイリアス）
+export const getAllCategories = getCategories;
+
 // カテゴリ削除関数
 export async function deleteCategory(id: string) {
   return prisma.category.delete({

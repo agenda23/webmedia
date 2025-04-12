@@ -37,8 +37,7 @@ export async function createPost(data: {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -86,8 +85,7 @@ export async function updatePost(
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -105,8 +103,7 @@ export async function getPostById(id: string) {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -120,8 +117,7 @@ export async function getPostById(id: string) {
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
+              name: true,
             },
           },
         },
@@ -141,8 +137,7 @@ export async function getPostBySlug(slug: string) {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -156,8 +151,7 @@ export async function getPostBySlug(slug: string) {
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
+              name: true,
             },
           },
         },
@@ -234,8 +228,7 @@ export async function getPosts({
         author: {
           select: {
             id: true,
-            firstName: true,
-            lastName: true,
+            name: true,
           },
         },
         category: true,

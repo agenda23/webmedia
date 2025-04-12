@@ -3,3 +3,21 @@ node_modules
 /.cache
 /build
 .env
+.env.production
+.env.local
+.env.development
+
+# データベース
+prisma/dev.db
+prisma/dev.db-journal
+
+# OS関連
+.DS_Store
+Thumbs.db
+
+# エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+.editorconfig

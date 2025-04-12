@@ -57,6 +57,9 @@ export async function getTags() {
   });
 }
 
+// 全タグ取得関数（getTags のエイリアス）
+export const getAllTags = getTags;
+
 // タグ削除関数
 export async function deleteTag(id: string) {
   return prisma.tag.delete({

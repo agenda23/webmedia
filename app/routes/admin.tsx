@@ -280,9 +280,7 @@ export default function AdminLayout() {
               <div className="h-8 w-8 rounded-full bg-gray-300"></div>
               <div>
                 <p className="text-sm font-semibold">
-                  {user.firstName && user.lastName
-                    ? `${user.lastName} ${user.firstName}`
-                    : user.email}
+                  {user.name ? user.name : user.email}
                 </p>
                 <p className="text-xs text-gray-400">{user.role}</p>
               </div>
@@ -323,9 +321,7 @@ export default function AdminLayout() {
                 サイト表示
               </Link>
               <Link to="/admin/profile" className="text-sm text-gray-600 hover:text-gray-900">
-                {user.firstName && user.lastName
-                  ? `${user.lastName} ${user.firstName}`
-                  : user.email}
+                {user.name ? user.name : user.email}
               </Link>
             </div>
           </div>

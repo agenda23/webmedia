@@ -9,7 +9,12 @@
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
     "typecheck": "tsc",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "fly:deploy": "fly deploy",
+    "fly:migrate": "fly ssh console -C 'bash /app/scripts/migrate.sh'",
+    "fly:launch": "fly launch --copy-config",
+    "fly:pg:create": "fly postgres create --name webmedia-db --region nrt",
+    "fly:pg:attach": "fly postgres attach webmedia-db --app webmedia"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",

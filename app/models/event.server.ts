@@ -36,8 +36,7 @@ export async function createEvent(data: {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -84,8 +83,7 @@ export async function updateEvent(
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -103,8 +101,7 @@ export async function getEventById(id: string) {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -118,8 +115,7 @@ export async function getEventById(id: string) {
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
+              name: true,
             },
           },
         },
@@ -139,8 +135,7 @@ export async function getEventBySlug(slug: string) {
       author: {
         select: {
           id: true,
-          firstName: true,
-          lastName: true,
+          name: true,
           email: true,
         },
       },
@@ -154,8 +149,7 @@ export async function getEventBySlug(slug: string) {
           author: {
             select: {
               id: true,
-              firstName: true,
-              lastName: true,
+              name: true,
             },
           },
         },
@@ -244,8 +238,7 @@ export async function getEvents({
         author: {
           select: {
             id: true,
-            firstName: true,
-            lastName: true,
+            name: true,
           },
         },
         categories: true,

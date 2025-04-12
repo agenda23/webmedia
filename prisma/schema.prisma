@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider     = "sqlite"
+  provider     = env("DATABASE_PROVIDER")
   url          = env("DATABASE_URL")
   relationMode = "prisma"
 }
@@ -13,8 +13,7 @@ model User {
   id             String    @id @default(uuid())
   email          String    @unique
   passwordHash   String
-  firstName      String?
-  lastName       String?
+  name           String?
   profilePicture String?
   role           UserRole  @default(AUTHOR)
   createdAt      DateTime  @default(now())

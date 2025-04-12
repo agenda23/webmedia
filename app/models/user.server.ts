@@ -5,14 +5,12 @@ import { prisma } from "./prisma.server";
 export async function createUser({ 
   email, 
   password, 
-  firstName = "", 
-  lastName = "", 
+  name = "", 
   role = "AUTHOR" 
 }: { 
   email: string; 
   password: string; 
-  firstName?: string; 
-  lastName?: string; 
+  name?: string; 
   role?: "ADMIN" | "EDITOR" | "AUTHOR" | "CONTRIBUTOR"; 
 }) {
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -21,8 +19,7 @@ export async function createUser({
     data: {
       email,
       passwordHash: hashedPassword,
-      firstName,
-      lastName,
+      name,
       role: role as any, // Prismaの型に合わせる
     },
   });
@@ -34,13 +31,13 @@ export async function verifyLogin(email: string, password: string) {
     where: { email },
   });
 
-  if ( !user) {
+  if (!user) {
     return null;
   }
 
   const isValid = await bcrypt.compare(password, user.passwordHash);
   
-  if ( !isValid) {
+  if (!isValid) {
     return null;
   }
 
@@ -54,7 +51,7 @@ export async function getUserById(id: string) {
     where: { id },
   });
 
-  if ( !user) {
+  if (!user) {
     return null;
   }
 
@@ -68,8 +65,7 @@ export async function getUsers() {
     select: {
       id: true,
       email: true,
-      firstName: true,
-      lastName: true,
+      name: true,
       role: true,
       createdAt: true,
       updatedAt: true,
@@ -79,12 +75,10 @@ export async function getUsers() {
     }
   });
   
-  // ビューで使いやすいように name プロパティを追加
+  // nameが空の場合はemailから生成する
   return users.map(user => ({
     ...user,
-    name: user.firstName && user.lastName 
-      ? `${user.firstName} ${user.lastName}` 
-      : user.firstName || user.lastName || user.email.split('@')[0]
+    name: user.name || user.email.split('@')[0]
   }));
 }
 
@@ -94,7 +88,7 @@ export async function getAllUsers() {
 }
 
 // ユーザー更新関数
-export async function updateUser(id: string, data: { firstName?: string; lastName?: string; email?: string; role?: string }) {
+export async function updateUser(id: string, data: { name?: string; email?: string; role?: string }) {
   return prisma.user.update({
     where: { id },
     data,

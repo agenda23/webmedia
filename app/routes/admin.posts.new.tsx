@@ -2,49 +2,53 @@ import { useState } from "react";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { getPostById, updatePost } from "~/models/post.server";
+import { createPost } from "~/models/post.server";
 import { getAllCategories } from "~/models/category.server";
 import { getAllTags } from "~/models/tag.server";
 import { requireEditor } from "~/utils/session.server";
+import { generateSlug } from "~/utils/helpers";
 
 export const handle = {
-  title: "記事編集",
+  title: "新規記事作成",
 };
 
-export async function loader({ params, request }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   await requireEditor(request);
-  
-  const postId = params.postId;
-  
-  if (!postId) {
-    throw new Response("Post ID is required", { status: 400 });
-  }
 
-  const [post, categories, tags] = await Promise.all([
-    getPostById(postId),
+  const [categories, tags] = await Promise.all([
     getAllCategories(),
     getAllTags(),
   ]);
 
-  if (!post) {
-    throw new Response("Post not found", { status: 404 });
-  }
+  // 空の投稿データを作成して初期値として使用
+  const emptyPost = {
+    id: "",
+    title: "",
+    content: "",
+    excerpt: "",
+    slug: "",
+    status: "DRAFT",
+    publishedAt: null,
+    featuredImage: null,
+    seoTitle: null,
+    seoDescription: null,
+    authorId: "",
+    categories: [],
+    tags: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
 
   return json({ 
-    post, 
+    post: emptyPost, 
     categories, 
     tags,
-    isNew: false 
+    isNew: true 
   });
 }
 
-export async function action({ request, params }: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const user = await requireEditor(request);
-  const postId = params.postId;
-  
-  if (!postId) {
-    throw new Response("Post ID is required", { status: 400 });
-  }
   
   const formData = await request.formData();
   const title = formData.get("title")?.toString();
@@ -66,55 +70,49 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return json({ errors, success: false });
   }
 
+  // スラグを生成（タイトルから自動生成）
+  const slug = generateSlug(title || "");
+
   try {
-    await updatePost(
-      postId,
-      {
-        title: title || "",
-        content: content || "",
-        excerpt: excerpt || "",
-        featuredImage,
-        // ステータスを大文字に変換
-        status: status ? status.toUpperCase() : "DRAFT",
-        categoryIds,
-        tagIds,
-        publishedAt: publishDate ? new Date(publishDate) : undefined,
-      }
-    );
+    await createPost({
+      title: title || "",
+      content: content || "",
+      excerpt: excerpt || "",
+      slug,
+      featuredImage,
+      // ステータスを大文字に変換
+      status: status ? status.toUpperCase() : "DRAFT",
+      categoryIds,
+      tagIds,
+      authorId: user.id,
+      publishedAt: publishDate ? new Date(publishDate) : undefined,
+    });
 
     return redirect("/admin/posts");
   } catch (error) {
     return json({ 
       errors: { 
-        form: "記事の更新中にエラーが発生しました"
+        form: "記事の作成中にエラーが発生しました"
       }, 
       success: false 
     });
   }
 }
 
-export default function EditPost() {
+export default function NewPost() {
   const { post, categories, tags, isNew } = useLoaderData<typeof loader>();
   const actionData = useActionData<{ errors?: any; success?: boolean }>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   
   // 「公開予定」を選択した場合に表示する公開日時設定
-  const [showScheduleOptions, setShowScheduleOptions] = useState(post.status === "SCHEDULED");
+  const [showScheduleOptions, setShowScheduleOptions] = useState(false);
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">記事編集</h1>
+        <h1 className="text-2xl font-bold text-gray-900">新規記事作成</h1>
         <div className="flex space-x-3">
-          <a 
-            href={`/posts/${post.slug}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            プレビュー
-          </a>
           <a 
             href="/admin/posts"
             className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
@@ -166,7 +164,6 @@ export default function EditPost() {
                     name="title"
                     id="title"
                     required
-                    defaultValue={post.title}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -185,7 +182,6 @@ export default function EditPost() {
                     name="content"
                     rows={15}
                     required
-                    defaultValue={post.content}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   />
                 </div>
@@ -203,7 +199,6 @@ export default function EditPost() {
                     id="excerpt"
                     name="excerpt"
                     rows={3}
-                    defaultValue={post.excerpt || ""}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     placeholder="記事の概要を入力してください（検索結果などに表示されます）"
                   />
@@ -222,7 +217,7 @@ export default function EditPost() {
                       name="status"
                       type="radio"
                       value="DRAFT"
-                      defaultChecked={post.status === "DRAFT"}
+                      defaultChecked
                       onChange={() => setShowScheduleOptions(false)}
                       className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -236,7 +231,6 @@ export default function EditPost() {
                       name="status"
                       type="radio"
                       value="PUBLISHED"
-                      defaultChecked={post.status === "PUBLISHED"}
                       onChange={() => setShowScheduleOptions(false)}
                       className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -250,7 +244,6 @@ export default function EditPost() {
                       name="status"
                       type="radio"
                       value="SCHEDULED"
-                      defaultChecked={post.status === "SCHEDULED"}
                       onChange={() => setShowScheduleOptions(true)}
                       className="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
@@ -268,7 +261,6 @@ export default function EditPost() {
                         type="datetime-local"
                         id="publishDate"
                         name="publishDate"
-                        defaultValue={post.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 16) : ""}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                       />
                     </div>
@@ -299,7 +291,6 @@ export default function EditPost() {
                           name="categories"
                           type="checkbox"
                           value={category.id}
-                          defaultChecked={post.categories?.some(c => c.id === category.id)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </div>
@@ -324,7 +315,6 @@ export default function EditPost() {
                           name="tags"
                           type="checkbox"
                           value={tag.id}
-                          defaultChecked={post.tags?.some(t => t.id === tag.id)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </div>
@@ -341,32 +331,22 @@ export default function EditPost() {
               <div className="rounded-md border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="text-lg font-medium text-gray-900">アイキャッチ画像</h3>
                 <div className="mt-2">
-                  {post.featuredImage ? (
-                    <div className="mb-3">
-                      <img
-                        src={post.featuredImage}
-                        alt="アイキャッチ画像"
-                        className="h-40 w-full rounded-md object-cover"
+                  <div className="flex h-40 w-full items-center justify-center rounded-md bg-gray-100 text-gray-400">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
-                    </div>
-                  ) : (
-                    <div className="flex h-40 w-full items-center justify-center rounded-md bg-gray-100 text-gray-400">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-12 w-12"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                  )}
+                    </svg>
+                  </div>
                   <div className="mt-2">
                     <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700">
                       画像URL
@@ -375,7 +355,6 @@ export default function EditPost() {
                       type="text"
                       name="featuredImage"
                       id="featuredImage"
-                      defaultValue={post.featuredImage || ""}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                     />
                     <p className="mt-1 text-xs text-gray-500">

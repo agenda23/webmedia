@@ -26,8 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
   
   // プロフィール更新
   if (actionType === "updateProfile") {
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
+    const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     
     if (!email) {
@@ -42,7 +41,7 @@ export async function action({ request }: ActionFunctionArgs) {
     }
     
     try {
-      await updateUser(userId, { firstName, lastName, email });
+      await updateUser(userId, { name, email });
       return json({ 
         success: true, 
         message: "プロフィールを更新しました", 
@@ -152,21 +151,12 @@ export default function ProfilePage() {
             <Form method="post" className="space-y-4">
               <input type="hidden" name="_action" value="updateProfile" />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  label="姓"
-                  name="lastName"
-                  type="text"
-                  defaultValue={user.lastName || ""}
-                />
-                
-                <FormField
-                  label="名"
-                  name="firstName"
-                  type="text"
-                  defaultValue={user.firstName || ""}
-                />
-              </div>
+              <FormField
+                label="氏名"
+                name="name"
+                type="text"
+                defaultValue={user.name || ""}
+              />
               
               <FormField
                 label="メールアドレス"
@@ -207,9 +197,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h3 className="font-medium">
-                  {user.firstName && user.lastName
-                    ? `${user.lastName} ${user.firstName}`
-                    : user.email}
+                  {user.name ? user.name : user.email}
                 </h3>
                 <p className="text-sm text-gray-500 capitalize">{user.role.toLowerCase()}</p>
               </div>

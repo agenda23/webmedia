@@ -100,7 +100,7 @@ export default function Index() {
                 </h3>
                 <p className="mb-4 text-gray-600">{post.excerpt}</p>
                 <div className="flex items-center">
-                  <span className="mr-2 text-sm text-gray-600">by {post.author.firstName} {post.author.lastName}</span>
+                  <span className="mr-2 text-sm text-gray-600">by {post.author.name}</span>
                   <div className="flex flex-wrap gap-2">
                     {post.categories.map((category) => (
                       <a
