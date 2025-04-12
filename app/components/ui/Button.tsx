@@ -8,7 +8,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
-export default function Button({
+// デフォルトエクスポートと名前付きエクスポートの両方を提供
+export function Button({
   variant = "primary",
   size = "md",
   fullWidth = false,
@@ -46,4 +47,6 @@ export default function Button({
     </button>
   );
 }
- 
+
+// 後方互換性のためのデフォルトエクスポート
+export default Button;

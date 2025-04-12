@@ -6,7 +6,7 @@ import { getSiteSettings, updateSiteSettings } from "~/models/siteSettings.serve
 import { requireAdmin } from "~/utils/session.server";
 import { AdminPageHeader } from "~/components/admin/AdminPageHeader";
 import { FormField } from "~/components/ui/FormField";
-import { Button } from "~/components/ui/Button";
+import Button from "~/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/Tabs";
 import { AlertSuccess, AlertError } from "~/components/ui/Alert";
 import { MediaUpload } from "~/components/admin/MediaUpload";
