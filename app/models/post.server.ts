@@ -129,6 +129,44 @@ export async function getPostById(id: string) {
   });
 }
 
+// 関連記事取得関数
+export async function getRelatedPosts({
+  postId,
+  categoryIds,
+  limit = 3,
+}: {
+  postId: string;
+  categoryIds: string[];
+  limit?: number;
+}) {
+  return prisma.post.findMany({
+    where: {
+      id: { not: postId },
+      category: {
+        some: {
+          id: { in: categoryIds },
+        },
+      },
+      published: true, // 公開済みの記事だけにしたい場合
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: limit,
+    include: {
+      author: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      category: true,
+      tags: true,
+    },
+  });
+}
+
+
 // スラグによる記事取得関数
 export async function getPostBySlug(slug: string) {
   return prisma.post.findUnique({
