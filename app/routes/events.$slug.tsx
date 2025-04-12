@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node";
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
-import { getEventBySlug, getRelatedEvents } from "~/models/event.server";
+import { getEventBySlug, getEvents } from "~/models/event.server";
 import { formatDate } from "~/utils/helpers";
 import invariant from "tiny-invariant";
 
@@ -33,7 +33,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Response("イベントが見つかりません", { status: 404 });
   }
 
-  const relatedEvents = await getRelatedEvents({
+  const relatedEvents = await getEvents({
     eventId: event.id,
     categoryIds: event.categories.map(cat => cat.id),
     limit: 3
