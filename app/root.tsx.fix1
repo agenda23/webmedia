@@ -1,0 +1,14 @@
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+} from "@remix-run/react";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+
+import "./tailwind.css";
+import { getSettingValue } from "./models/setting.server";
+import { getUser } from "./utils/session.server";
+import { MainNavigation, Footer } from "./components/layout";

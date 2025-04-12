@@ -4,10 +4,15 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import "./tailwind.css";
+import { getSiteSettings } from "./models/siteSettings.server";
+import { getUser } from "./utils/session.server";
+import { MainNavigation, Footer } from "./components/layout";
+
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -22,16 +27,27 @@ export const links: LinksFunction = () => [
   },
 ];
 
+export async function loader({ request }: LoaderFunctionArgs) {
+  const user = await getUser(request);
+  const siteSettings = await getSiteSettings();
+
+  return {
+    user,
+    siteName: siteSettings.siteName,
+    siteDescription: siteSettings.siteDescription || "飲食店舗の広報活動と情報発信のためのWebメディア",
+  };
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="min-h-screen bg-white text-gray-900">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -41,5 +57,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { siteName, siteDescription } = useLoaderData<typeof loader>();
+  
+  return (
+    <>
+      {/* インラインのヘッダーをコンポーネントに置き換え */}
+      <MainNavigation siteName={siteName} siteDescription={siteDescription} />
+      
+      <main className="container mx-auto px-4 py-8">
+        <Outlet />
+      </main>
+      
+      {/* インラインのフッターをコンポーネントに置き換え */}
+      <Footer siteName={siteName} siteDescription={siteDescription} />
+    </>
+  );
 }

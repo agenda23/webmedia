@@ -12,6 +12,22 @@ import { RemixServer } from "@remix-run/react";
 import { isbot } from "isbot";
 import { renderToPipeableStream } from "react-dom/server";
 
+// データベース初期化関数をインポート
+import { initializeDatabase } from "~/models/init-db.server";
+
+// サーバー起動時に初期化処理を実行
+initializeDatabase()
+  .then(result => {
+    if (result.success) {
+      console.log("Database initialization completed successfully");
+    } else {
+      console.error("Database initialization failed:", result.error);
+    }
+  })
+  .catch(error => {
+    console.error("Error during database initialization:", error);
+  });
+
 const ABORT_DELAY = 5_000;
 
 export default function handleRequest(
