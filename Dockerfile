@@ -14,6 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bash ./scripts/switch-prisma-schema.sh prod
+RUN ls -al prisma && cat prisma/schema.prisma
 RUN npx prisma generate
 RUN npm run build
 
