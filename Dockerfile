@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bash ./scripts/switch-prisma-schema.sh prod
-RUN npx prisma generate # Prisma Clientを生成
+RUN npx prisma generate
 RUN npm run build
 
 # 本番実行ステージ
