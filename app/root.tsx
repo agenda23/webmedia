@@ -9,7 +9,7 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 
 import "./tailwind.css";
-import { getSiteSettings } from "./models/siteSettings.server";
+import { getSiteSettings } from "./models/SiteSettings.server";
 import { getUser } from "./utils/session.server";
 import { MainNavigation, Footer } from "./components/layout";
 
