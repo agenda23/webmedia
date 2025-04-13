@@ -3,8 +3,7 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
-    "firstName" TEXT,
-    "lastName" TEXT,
+    "name" TEXT,
     "profilePicture" TEXT,
     "role" TEXT NOT NULL DEFAULT 'AUTHOR',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -78,6 +77,15 @@ CREATE TABLE "SiteSettings" (
 );
 
 -- CreateTable
+CREATE TABLE "Setting" (
+    "key" TEXT NOT NULL PRIMARY KEY,
+    "value" TEXT NOT NULL,
+    "group" TEXT,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "Category" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -130,6 +138,7 @@ CREATE TABLE "Comment" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
     "postId" TEXT NOT NULL,
+    "eventId" TEXT,
     "authorId" TEXT,
     "parentId" TEXT
 );
@@ -149,7 +158,7 @@ CREATE TABLE "Event" (
     "publishedAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    "categoryId" TEXT
+    "authorId" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -186,6 +195,12 @@ CREATE TABLE "Media" (
     "updatedAt" DATETIME NOT NULL
 );
 
+-- CreateTable
+CREATE TABLE "_EventToCategory" (
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -203,3 +218,9 @@ CREATE UNIQUE INDEX "Post_slug_key" ON "Post"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Event_slug_key" ON "Event"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_EventToCategory_AB_unique" ON "_EventToCategory"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_EventToCategory_B_index" ON "_EventToCategory"("B");

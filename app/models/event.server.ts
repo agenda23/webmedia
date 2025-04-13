@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma.server";
+import { handleDbError } from "../utils/helpers";
 
 // イベント作成関数
 export async function createEvent(data: {
@@ -16,34 +15,39 @@ export async function createEvent(data: {
   categoryIds?: string[];
   tagIds?: string[];
 }) {
-  const { categoryIds, tagIds, ...eventData } = data;
+  try {
+    const { categoryIds, tagIds, ...eventData } = data;
 
-  return prisma.event.create({
-    data: {
-      ...eventData,
-      categories: categoryIds
-        ? {
-            connect: categoryIds.map((id) => ({ id })),
-          }
-        : undefined,
-      tags: tagIds
-        ? {
-            connect: tagIds.map((id) => ({ id })),
-          }
-        : undefined,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+    return await prisma.event.create({
+      data: {
+        ...eventData,
+        categories: categoryIds
+          ? {
+              connect: categoryIds.map((id) => ({ id })),
+            }
+          : undefined,
+        tags: tagIds
+          ? {
+              connect: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
       },
-      categories: true,
-      tags: true,
-    },
-  });
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        categories: true,
+        tags: true,
+      },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベントの作成中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // イベント更新関数
@@ -62,103 +66,118 @@ export async function updateEvent(
     tagIds?: string[];
   }
 ) {
-  const { categoryIds, tagIds, ...eventData } = data;
+  try {
+    const { categoryIds, tagIds, ...eventData } = data;
 
-  return prisma.event.update({
-    where: { id },
-    data: {
-      ...eventData,
-      categories: categoryIds
-        ? {
-            set: categoryIds.map((id) => ({ id })),
-          }
-        : undefined,
-      tags: tagIds
-        ? {
-            set: tagIds.map((id) => ({ id })),
-          }
-        : undefined,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+    return await prisma.event.update({
+      where: { id },
+      data: {
+        ...eventData,
+        categories: categoryIds
+          ? {
+              set: categoryIds.map((id) => ({ id })),
+            }
+          : undefined,
+        tags: tagIds
+          ? {
+              set: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
       },
-      categories: true,
-      tags: true,
-    },
-  });
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        categories: true,
+        tags: true,
+      },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベントの更新中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // イベント取得関数
 export async function getEventById(id: string) {
-  return prisma.event.findUnique({
-    where: { id },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      categories: true,
-      tags: true,
-      comments: {
-        where: {
-          status: "APPROVED",
-        },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
+  try {
+    return await prisma.event.findUnique({
+      where: { id },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-        orderBy: {
-          createdAt: "desc",
+        categories: true,
+        tags: true,
+        comments: {
+          where: {
+            status: "APPROVED",
+          },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベントの取得中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // スラグによるイベント取得関数
 export async function getEventBySlug(slug: string) {
-  return prisma.event.findUnique({
-    where: { slug },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      categories: true,
-      tags: true,
-      comments: {
-        where: {
-          status: "APPROVED",
-        },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
+  try {
+    return await prisma.event.findUnique({
+      where: { slug },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
-        orderBy: {
-          createdAt: "desc",
+        categories: true,
+        tags: true,
+        comments: {
+          where: {
+            status: "APPROVED",
+          },
+          include: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベントの取得中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // イベント一覧取得関数
@@ -179,91 +198,107 @@ export async function getEvents({
   searchTerm?: string;
   upcoming?: boolean;
 }) {
-  const skip = (page - 1) * limit;
+  try {
+    const skip = (page - 1) * limit;
 
-  const where: any = {
-    status: {
-      in: status,
-    },
-  };
-
-  if (upcoming) {
-    where.startDate = {
-      gte: new Date(),
-    };
-  }
-
-  if (categoryId) {
-    where.categories = {
-      some: {
-        id: categoryId,
+    const where: {
+      status?: { in: string[] };
+      startDate?: { gte: Date };
+      categories?: { some: { id: string } };
+      tags?: { some: { id: string } };
+      OR?: { title?: { contains: string; mode: "insensitive" }; description?: { contains: string; mode: "insensitive" } }[];
+    } = {
+      status: {
+        in: status,
       },
     };
-  }
 
-  if (tagId) {
-    where.tags = {
-      some: {
-        id: tagId,
-      },
-    };
-  }
+    if (upcoming) {
+      where.startDate = {
+        gte: new Date(),
+      };
+    }
 
-  if (searchTerm) {
-    where.OR = [
-      {
-        title: {
-          contains: searchTerm,
-          mode: "insensitive",
+    if (categoryId) {
+      where.categories = {
+        some: {
+          id: categoryId,
         },
-      },
-      {
-        description: {
-          contains: searchTerm,
-          mode: "insensitive",
-        },
-      },
-    ];
-  }
+      };
+    }
 
-  const [events, totalCount] = await prisma.$transaction([
-    prisma.event.findMany({
-      where,
-      orderBy: {
-        startDate: "asc",
-      },
-      skip,
-      take: limit,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
+    if (tagId) {
+      where.tags = {
+        some: {
+          id: tagId,
+        },
+      };
+    }
+
+    if (searchTerm) {
+      where.OR = [
+        {
+          title: {
+            contains: searchTerm,
+            mode: "insensitive",
           },
         },
-        categories: true,
-        tags: true,
-        _count: {
-          select: {
-            comments: true,
+        {
+          description: {
+            contains: searchTerm,
+            mode: "insensitive",
           },
         },
-      },
-    }),
-    prisma.event.count({ where }),
-  ]);
+      ];
+    }
 
-  return {
-    events,
-    totalCount,
-    totalPages: Math.ceil(totalCount / limit),
-    currentPage: page,
-  };
+    const [events, totalCount] = await prisma.$transaction([
+      prisma.event.findMany({
+        where,
+        orderBy: {
+          startDate: "asc",
+        },
+        skip,
+        take: limit,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          categories: true,
+          tags: true,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      }),
+      prisma.event.count({ where }),
+    ]);
+
+    return {
+      events,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    };
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベント一覧の取得中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // イベント削除関数
 export async function deleteEvent(id: string) {
-  return prisma.event.delete({
-    where: { id },
-  });
+  try {
+    return await prisma.event.delete({
+      where: { id },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "イベントの削除中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }

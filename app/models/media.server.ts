@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma.server";
 
 // メディア作成関数
 export async function createMedia(data: {
@@ -53,7 +51,14 @@ export async function getMediaItems({
 }) {
   const skip = (page - 1) * limit;
 
-  const where: any = {};
+  const where: {
+    type?: string;
+    OR?: { 
+      title?: { contains: string; mode: "insensitive" }; 
+      description?: { contains: string; mode: "insensitive" };
+      filename?: { contains: string; mode: "insensitive" };
+    }[];
+  } = {};
 
   if (type) {
     where.type = type;

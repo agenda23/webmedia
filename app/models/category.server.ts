@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma.server";
 
 // カテゴリ作成関数
 export async function createCategory(data: {

@@ -26,6 +26,73 @@ export function handleError(error: unknown): Error {
   return new Error(typeof error === 'string' ? error : 'Unknown error occurred');
 }
 
+// データベースエラーをハンドリングするヘルパー関数
+import { Prisma } from '@prisma/client';
+
+/**
+ * データベースエラーをハンドリングするヘルパー関数
+ * @param error 発生したエラー
+ * @param defaultMessage デフォルトのエラーメッセージ
+ * @returns エラーオブジェクト
+ */
+export function handleDbError(error: unknown, defaultMessage = '操作中にエラーが発生しました'): { 
+  message: string; 
+  code?: string;
+  status: number;
+} {
+  console.error('Database error:', error);
+  
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    // Prismaの既知のエラー
+    const code = error.code;
+    
+    switch (code) {
+      case 'P2002': // ユニーク制約違反
+        return { 
+          message: 'この値は既に使用されています。別の値を入力してください。', 
+          code,
+          status: 400
+        };
+      case 'P2003': // 外部キー制約違反
+        return { 
+          message: '関連するレコードが見つかりません。', 
+          code,
+          status: 400
+        };
+      case 'P2025': // レコードが見つからない
+        return { 
+          message: '指定されたレコードが見つかりません。', 
+          code,
+          status: 404
+        };
+      default:
+        return { 
+          message: `データベースエラー (${code}): ${error.message}`, 
+          code,
+          status: 500
+        };
+    }
+  } else if (error instanceof Prisma.PrismaClientValidationError) {
+    // バリデーションエラー
+    return { 
+      message: 'データバリデーションエラー: 入力内容を確認してください。',
+      status: 400
+    };
+  } else if (error instanceof Error) {
+    // 一般的なエラー
+    return { 
+      message: error.message || defaultMessage,
+      status: 500
+    };
+  }
+  
+  // その他の不明なエラー
+  return { 
+    message: defaultMessage,
+    status: 500
+  };
+}
+
 // 文字列をスラグ形式に変換する関数
 export function generateSlug(text: string): string {
   return text

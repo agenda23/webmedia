@@ -8,4 +8,253 @@ datasource db {
   relationMode = "prisma"
 }
 
-// ここに他のモデル定義を含めます
+// ここから下は本番環境のschema.prismaと同じモデル定義を含めます
+// ユーザーモデル
+model User {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  passwordHash   String
+  name           String?
+  profilePicture String?
+  role           UserRole  @default(AUTHOR)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  posts          Post[]
+  events         Event[]
+  comments       Comment[]
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  AUTHOR
+  CONTRIBUTOR
+}
+
+// 店舗情報モデル - 店舗関連情報を管理
+model Store {
+  id             String         @id @default(uuid())
+  name           String
+  description    String?
+  phone          String
+  email          String
+  accessInfo     String?
+  reservationUrl String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  address        Address?
+  businessHours  BusinessHour[]
+}
+
+// 住所モデル
+model Address {
+  id         String   @id @default(uuid())
+  zipCode    String
+  prefecture String
+  city       String
+  street     String
+  building   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  storeId    String   @unique
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+// 営業時間モデル
+model BusinessHour {
+  id        String   @id @default(uuid())
+  day       String
+  isOpen    Boolean  @default(true)
+  openTime  String?
+  closeTime String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+// サイト設定モデル - サイト全体の設定を管理
+model SiteSettings {
+  id                          String   @id @default(uuid())
+  siteName                    String
+  siteDescription             String?
+  logoUrl                     String?
+  faviconUrl                  String?
+  metaTitle                   String?
+  metaDescription             String?
+  ogImageUrl                  String?
+  googleAnalyticsId           String?
+  twitterUrl                  String?
+  facebookUrl                 String?
+  instagramUrl                String?
+  youtubeUrl                  String?
+  lineUrl                     String?
+  adminEmail                  String
+  sendCommentNotification     Boolean  @default(true)
+  sendContactFormNotification Boolean  @default(true)
+  postsPerPage                Int      @default(10)
+  showAuthorInfo              Boolean  @default(true)
+  enableComments              Boolean  @default(true)
+  primaryColor                String?
+  secondaryColor              String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+// カスタム設定モデル - キーバリュー形式で柔軟な設定を管理
+model Setting {
+  key       String    @id
+  value     String
+  group     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// コンテンツ関連モデル
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  posts       Post[]
+  events      Event[]    @relation("EventToCategory")
+  menuItems   MenuItem[]
+  parentId    String?
+  parent      Category?  @relation("SubCategories", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  children    Category[] @relation("SubCategories")
+}
+
+model Tag {
+  id        String       @id @default(uuid())
+  name      String
+  slug      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  posts     PostToTag[]
+  events    EventToTag[]
+}
+
+model Post {
+  id            String      @id @default(uuid())
+  title         String
+  slug          String      @unique
+  content       String
+  excerpt       String?
+  featuredImage String?
+  status        PostStatus  @default(DRAFT)
+  publishedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  categoryId    String?
+  authorId      String
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tags          PostToTag[]
+  comments      Comment[]
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+}
+
+model PostToTag {
+  postId    String
+  tagId     String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  content   String
+  status    Status    @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  postId    String
+  eventId   String?
+  authorId  String?
+  parentId  String?
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  event     Event?    @relation("EventComments", fields: [eventId], references: [id], onDelete: Cascade)
+  author    User?     @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  parent    Comment?  @relation("ReplyToComment", fields: [parentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  replies   Comment[] @relation("ReplyToComment")
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// イベント関連モデル
+model Event {
+  id            String       @id @default(uuid())
+  title         String
+  slug          String       @unique
+  content       String
+  excerpt       String?
+  featuredImage String?
+  startDate     DateTime
+  endDate       DateTime?
+  location      String?
+  status        EventStatus  @default(DRAFT)
+  publishedAt   DateTime?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  authorId      String
+  author        User         @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  categories    Category[]   @relation("EventToCategory")
+  tags          EventToTag[]
+  comments      Comment[]    @relation("EventComments")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  CANCELLED
+}
+
+model EventToTag {
+  eventId   String
+  tagId     String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, tagId])
+}
+
+// メニュー関連モデル（店舗メニュー）
+model MenuItem {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  price       Int
+  image       String?
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+}
+
+// メディア管理
+model Media {
+  id           String   @id @default(uuid())
+  filename     String
+  originalname String
+  path         String
+  size         Int
+  mimetype     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

@@ -1,8 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma.server";
 
 // 記事作成関数
+import { handleDbError } from "../utils/helpers";
+
 export async function createPost(data: {
   title: string;
   content: string;
@@ -17,34 +17,39 @@ export async function createPost(data: {
   categoryIds?: string[];
   tagIds?: string[];
 }) {
-  const { categoryIds, tagIds, ...postData } = data;
+  try {
+    const { categoryIds, tagIds, ...postData } = data;
 
-  return prisma.post.create({
-    data: {
-      ...postData,
-      category: categoryIds && categoryIds.length > 0
-        ? {
-            connect: { id: categoryIds[0] },
-          }
-        : undefined,
-      tags: tagIds
-        ? {
-            connect: tagIds.map((id) => ({ id })),
-          }
-        : undefined,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+    return await prisma.post.create({
+      data: {
+        ...postData,
+        category: categoryIds && categoryIds.length > 0
+          ? {
+              connect: { id: categoryIds[0] },
+            }
+          : undefined,
+        tags: tagIds
+          ? {
+              connect: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
       },
-      category: true,
-      tags: true,
-    },
-  });
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        category: true,
+        tags: true,
+      },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "記事の作成中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // 記事更新関数
@@ -64,35 +69,40 @@ export async function updatePost(
     tagIds?: string[];
   }
 ) {
-  const { categoryIds, tagIds, ...postData } = data;
+  try {
+    const { categoryIds, tagIds, ...postData } = data;
 
-  return prisma.post.update({
-    where: { id },
-    data: {
-      ...postData,
-      category: categoryIds && categoryIds.length > 0
-        ? {
-            connect: { id: categoryIds[0] },
-          }
-        : undefined,
-      tags: tagIds
-        ? {
-            set: tagIds.map((id) => ({ id })),
-          }
-        : undefined,
-    },
-    include: {
-      author: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+    return await prisma.post.update({
+      where: { id },
+      data: {
+        ...postData,
+        category: categoryIds && categoryIds.length > 0
+          ? {
+              connect: { id: categoryIds[0] },
+            }
+          : undefined,
+        tags: tagIds
+          ? {
+              set: tagIds.map((id) => ({ id })),
+            }
+          : undefined,
       },
-      category: true,
-      tags: true,
-    },
-  });
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        category: true,
+        tags: true,
+      },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "記事の更新中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // 記事取得関数
@@ -147,7 +157,7 @@ export async function getRelatedPosts({
           id: { in: categoryIds },
         },
       },
-      published: true, // 公開済みの記事だけにしたい場合
+      status: "PUBLISHED", // 公開済みの記事だけにする正しい条件
     },
     orderBy: {
       createdAt: "desc",
@@ -217,81 +227,96 @@ export async function getPosts({
   tagId?: string;
   searchTerm?: string;
 }) {
-  const skip = (page - 1) * limit;
+  try {
+    const skip = (page - 1) * limit;
 
-  const where: any = {
-    status: {
-      in: status,
-    },
-  };
-
-  if (categoryId) {
-    where.categoryId = categoryId;
-  }
-
-  if (tagId) {
-    where.tags = {
-      some: {
-        id: tagId,
+    const where: {
+      status?: { in: string[] };
+      categoryId?: string;
+      tags?: { some: { id: string } };
+      OR?: { title?: { contains: string; mode: "insensitive" }; content?: { contains: string; mode: "insensitive" } }[];
+    } = {
+      status: {
+        in: status,
       },
     };
-  }
 
-  if (searchTerm) {
-    where.OR = [
-      {
-        title: {
-          contains: searchTerm,
-          mode: "insensitive",
-        },
-      },
-      {
-        content: {
-          contains: searchTerm,
-          mode: "insensitive",
-        },
-      },
-    ];
-  }
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
 
-  const [posts, totalCount] = await prisma.$transaction([
-    prisma.post.findMany({
-      where,
-      orderBy: {
-        publishedAt: "desc",
-      },
-      skip,
-      take: limit,
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
+    if (tagId) {
+      where.tags = {
+        some: {
+          id: tagId,
+        },
+      };
+    }
+
+    if (searchTerm) {
+      where.OR = [
+        {
+          title: {
+            contains: searchTerm,
+            mode: "insensitive",
           },
         },
-        category: true,
-        tags: true,
-        _count: {
-          select: {
-            comments: true,
+        {
+          content: {
+            contains: searchTerm,
+            mode: "insensitive",
           },
         },
-      },
-    }),
-    prisma.post.count({ where }),
-  ]);
+      ];
+    }
 
-  return {
-    posts,
-    totalCount,
-    totalPages: Math.ceil(totalCount / limit),
-    currentPage: page,
-  };
+    const [posts, totalCount] = await prisma.$transaction([
+      prisma.post.findMany({
+        where,
+        orderBy: {
+          publishedAt: "desc",
+        },
+        skip,
+        take: limit,
+        include: {
+          author: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          category: true,
+          tags: true,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      }),
+      prisma.post.count({ where }),
+    ]);
+
+    return {
+      posts,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: page,
+    };
+  } catch (error) {
+    const errorDetails = handleDbError(error, "記事一覧の取得中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }
 
 // 記事削除関数
 export async function deletePost(id: string) {
-  return prisma.post.delete({
-    where: { id },
-  });
+  try {
+    return await prisma.post.delete({
+      where: { id },
+    });
+  } catch (error) {
+    const errorDetails = handleDbError(error, "記事の削除中にエラーが発生しました");
+    throw new Error(errorDetails.message);
+  }
 }

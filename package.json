@@ -1,5 +1,5 @@
 {
-  "name": "ageyamedia",
+  "name": "webmedia",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -12,6 +12,9 @@
     "seed": "node prisma/seed.js",
     "fly:deploy": "fly deploy",
     "fly:migrate": "fly ssh console -C 'bash /app/scripts/migrate.sh'",
+    "fly:init-sqlite": "fly ssh console -C 'bash /app/scripts/init-sqlite.sh'",
+    "fly:update-schema": "fly ssh console -C 'bash /app/scripts/update-schema.sh'",
+    "fly:diagnose": "fly ssh console -C 'bash /app/scripts/diagnose.sh'",
     "fly:launch": "fly launch --copy-config",
     "fly:pg:create": "fly postgres create --name webmedia-db --region nrt",
     "fly:pg:attach": "fly postgres attach webmedia-db --app webmedia",
