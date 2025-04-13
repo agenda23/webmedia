@@ -6,6 +6,12 @@
 
 本アプリケーションは以下のURLにデプロイされています：
 - **本番環境URL**: [https://webmedia.fly.dev/](https://webmedia.fly.dev/)
+- **管理画面URL**: [https://webmedia.fly.dev/admin/](https://webmedia.fly.dev/admin/)
+
+### 管理画面へのアクセス
+管理画面へアクセスするには以下の認証情報を使用してください：
+- **メールアドレス**: test@test.com
+- **パスワード**: password
 
 ## 技術スタック
 
