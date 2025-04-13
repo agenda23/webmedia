@@ -11,10 +11,10 @@ if [ $? -ne 0 ]; then
   echo "警告: データディレクトリとデータベースファイルの初期化中にエラーが発生しました。"
 fi
 
-# スキーマ更新（PostgreSQLからSQLiteへ）
+# スキーマ確認
 echo "スキーマファイルを確認しています..."
-if grep -q "provider *= *\"postgresql\"" prisma/schema.prisma; then
-  echo "PostgreSQLプロバイダが検出されました。スキーマを更新します..."
+if ! grep -q "provider *= *\"sqlite\"" prisma/schema.prisma; then
+  echo "SQLite以外のプロバイダが検出されました。スキーマを更新します..."
   bash /app/scripts/update-schema.sh
 else
   echo "スキーマファイルは既にSQLiteプロバイダを使用しています。"
@@ -62,10 +62,8 @@ fi
 
 # マイグレーションの実行
 echo "データベースマイグレーションを実行しています..."
-npx prisma migrate dev --name init_schema --create-only
-if [ $? -ne 0 ]; then
-  echo "警告: マイグレーション作成に失敗しました。既存のマイグレーションを適用します。"
-fi
+# migrate dev をスキップして、直接 deploy を実行（時間短縮のため）
+echo "既存のマイグレーションを適用します..."
 
 npx prisma migrate deploy
 if [ $? -ne 0 ]; then

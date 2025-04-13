@@ -5,7 +5,7 @@ set -e
 MODE=$1
 
 echo "現在のスキーマ状態を確認中..."
-grep -q "provider = \"sqlite\"" prisma/schema.prisma && CURRENT="sqlite" || CURRENT="postgresql"
+grep -q "provider = \"sqlite\"" prisma/schema.prisma && CURRENT="sqlite" || CURRENT="sqlite"
 echo "現在のプロバイダー: $CURRENT"
 
 if [ "$MODE" = "dev" ]; then
@@ -14,7 +14,7 @@ if [ "$MODE" = "dev" ]; then
   echo "Prismaスキーマを開発環境用に変更しました。"
 elif [ "$MODE" = "prod" ]; then
   echo "本番環境用のPrismaスキーマに切り替えます..."
-  # PostgreSQLスキーマファイルを作成
+  # SQLiteスキーマファイルを作成（本番環境もSQLiteを使用）
   cat > prisma/schema.prisma << 'EOL'
 generator client {
   provider = "prisma-client-js"
@@ -22,7 +22,7 @@ generator client {
 }
 
 datasource db {
-  provider     = "postgresql"
+  provider     = "sqlite"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
 }

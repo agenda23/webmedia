@@ -2,13 +2,16 @@
 
 飲食店舗の情報発信、イベント告知、ブログ記事投稿などを行うためのWebメディアサイトです。飲食店のブランドイメージ向上と顧客エンゲージメントの強化を目的としています。
 
+## デプロイ先
+
+本アプリケーションは以下のURLにデプロイされています：
+- **本番環境URL**: [https://webmedia.fly.dev/](https://webmedia.fly.dev/)
+
 ## 技術スタック
 
 - **フレームワーク**: [Remix](https://remix.run/)（React ベースのフルスタックフレームワーク）
 - **UI**: Tailwind CSS
-- **データベース**:
-  - ローカル環境: SQLite
-  - 本番環境: PostgreSQL（fly.io）
+- **データベース**: SQLite（ローカル環境・本番環境とも）
 - **ORM**: Prisma
 - **認証**: bcryptjs
 - **バリデーション**: Zod
@@ -34,6 +37,10 @@
   - 基本設定
   - SEO設定
   - SNS連携設定
+
+## データベースについて
+
+**重要な変更**: 当初はローカル環境でSQLite、本番環境でPostgreSQLを使用する予定でしたが、**ローカル・本番環境ともにSQLiteを使用するように変更**しました。これにより環境間の整合性が向上し、デプロイプロセスも簡素化されました。SQLiteデータベースファイルは本番環境では永続ボリュームマウント上に保存されます。
 
 ## ローカル開発環境のセットアップ
 
@@ -93,6 +100,8 @@ npm run dev
 
 ## 本番環境へのデプロイ（fly.io）
 
+詳細なデプロイ手順については、[DEPLOY.md](./DEPLOY.md)ファイルを参照してください。
+
 ### 前提条件
 
 - [flyctl CLI](https://fly.io/docs/hands-on/install-flyctl/) のインストール
@@ -113,65 +122,88 @@ flyctl auth login
 npm run fly:launch
 ```
 
-3. **PostgreSQLデータベースの作成**
+3. **シークレットの設定**
 
 ```bash
-# データベースの作成
-npm run fly:pg:create
+# セッションシークレットの設定（自動化スクリプトを使用）
+npm run fly:set-secrets
 
-# アプリケーションにデータベースをアタッチ
-npm run fly:pg:attach
-```
-
-4. **シークレットの設定**
-
-```bash
-# セッションシークレットの設定
+# または手動で設定
 flyctl secrets set SESSION_SECRET=your-secure-secret-key
 ```
 
-5. **アプリケーションのデプロイ**
+4. **アプリケーションのデプロイ**
 
 ```bash
+# デフォルトのデプロイ
 npm run fly:deploy
+
+# またはリリースコマンド実行のタイムアウトを延長してデプロイ
+npm run fly:deploy-with-timeout
 ```
 
-6. **データベースマイグレーションの実行**
+5. **データベースの初期化**
+
+初回デプロイ後、SQLiteデータベースを初期化します：
 
 ```bash
-npm run fly:migrate
+npm run fly:init-sqlite
 ```
 
 これでアプリケーションが本番環境にデプロイされます。URLは `flyctl open` コマンドで確認できます。
 
-## モニタリングとトラブルシューティング
+## その他の運用コマンド
 
-### アプリケーションステータスの確認
+### データベース管理
 
 ```bash
+# マイグレーションの実行
+npm run fly:migrate
+
+# スキーマの更新
+npm run fly:update-schema
+
+# Prismaスキーマの切り替え
+npm run prisma:use-dev   # 開発環境用のスキーマに切り替え
+npm run prisma:use-prod  # 本番環境用のスキーマに切り替え
+```
+
+### 診断・トラブルシューティング
+
+```bash
+# 診断スクリプトの実行
+npm run fly:diagnose
+
+# アプリケーションステータスの確認
 flyctl status
-```
 
-### ログの確認
-
-```bash
+# ログの確認
 flyctl logs
-```
 
-### SSHでのアクセス
-
-問題が発生した場合、SSHでインスタンスに接続して調査できます：
-
-```bash
+# SSHでのアクセス
 flyctl ssh console
 ```
 
-### データベースへの直接接続
+## プロジェクト構造
 
-データベースに直接接続したい場合：
+```
+app/                      # アプリケーションコード
+├── components/           # 再利用可能なUIコンポーネント
+├── models/               # データモデル関連のロジック
+├── routes/               # ルート定義（ページ）
+├── styles/               # スタイルシート
+├── utils/                # ユーティリティ関数
+├── entry.client.tsx      # クライアントエントリーポイント
+├── entry.server.tsx      # サーバーエントリーポイント
+└── root.tsx              # ルートコンポーネント
 
-```bash
-flyctl postgres connect -a webmedia-db
+prisma/                   # Prisma関連ファイル
+├── schema.prisma         # データベーススキーマ
+├── migrations/           # マイグレーションファイル
+└── seed.js               # シードスクリプト
+
+public/                   # 静的ファイル
+scripts/                  # デプロイ・マイグレーションスクリプト
 ```
 
 ## 開発ワークフロー
@@ -204,35 +236,16 @@ git push origin feature/new-feature
 npm run fly:deploy
 ```
 
-## プロジェクト構造
+## 主な設定ファイル
 
-```
-app/                      # アプリケーションコード
-├── components/           # 再利用可能なUIコンポーネント
-├── models/               # データモデル関連のロジック
-├── routes/               # ルート定義（ページ）
-├── styles/               # スタイルシート
-├── utils/                # ユーティリティ関数
-├── entry.client.tsx      # クライアントエントリーポイント
-├── entry.server.tsx      # サーバーエントリーポイント
-└── root.tsx              # ルートコンポーネント
-
-prisma/                   # Prisma関連ファイル
-├── schema.prisma         # データベーススキーマ
-├── migrations/           # マイグレーションファイル
-└── seed.js               # シードスクリプト
-
-public/                   # 静的ファイル
-scripts/                  # デプロイ・マイグレーションスクリプト
-```
-
-## 貢献ガイド
-
-1. このリポジトリをフォークする
-2. 機能ブランチを作成する (`git checkout -b feature/amazing-feature`)
-3. 変更をコミットする (`git commit -m 'Add some amazing feature'`)
-4. ブランチにプッシュする (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成する
+- **fly.toml**: Fly.ioデプロイ設定
+- **Dockerfile**: コンテナ化設定
+- **prisma/schema.prisma**: データモデル定義
+- **scripts/**: 運用・デプロイ用スクリプト
+  - migrate.sh: マイグレーション実行
+  - init-sqlite.sh: SQLite初期化
+  - diagnose.sh: 診断情報収集
+  - set_fly_secrets.sh: シークレット設定
 
 ## ライセンス
 

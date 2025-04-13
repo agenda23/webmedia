@@ -11,6 +11,7 @@
     "typecheck": "tsc",
     "seed": "node prisma/seed.js",
     "fly:deploy": "fly deploy",
+    "fly:deploy-with-timeout": "fly deploy --release-command-timeout 900",
     "fly:migrate": "fly ssh console -C 'bash /app/scripts/migrate.sh'",
     "fly:init-sqlite": "fly ssh console -C 'bash /app/scripts/init-sqlite.sh'",
     "fly:update-schema": "fly ssh console -C 'bash /app/scripts/update-schema.sh'",

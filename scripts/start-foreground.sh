@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# アプリケーションスタートアップスクリプト
-echo "アプリケーションを起動します..."
+# 前面プロセスとしてアプリケーションを起動するスクリプト
+echo "アプリケーションをフォアグラウンドで起動します..."
 
 # 環境変数チェック
 echo "環境変数:"
@@ -44,6 +44,10 @@ fi
 echo "データベース接続をテストしています..."
 npx prisma migrate status
 
-# アプリケーション起動
+# アプリケーション初期化
+echo "アプリケーションを初期化しています..."
+node /app/build/server/initialize.js || true
+
+# アプリケーション起動（フォアグラウンドで実行）
 echo "Remix Webメディアを起動しています..."
-/usr/local/bin/node /app/build/server/index.js
+exec /usr/local/bin/node /app/build/server/index.js

@@ -252,7 +252,8 @@ export async function getEvents({
       ];
     }
 
-    const [events, totalCount] = await prisma.$transaction([
+    // Promise.allを使用して並列に実行
+    const [events, totalCount] = await Promise.all([
       prisma.event.findMany({
         where,
         orderBy: {
@@ -276,7 +277,7 @@ export async function getEvents({
           },
         },
       }),
-      prisma.event.count({ where }),
+      prisma.event.count({ where })
     ]);
 
     return {
